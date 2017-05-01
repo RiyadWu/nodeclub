@@ -9,15 +9,29 @@ mailer.SMTP = {
 	pass: config.mail_pass
 };
 
+// create reusable transporter object using the default SMTP transport
+let transporter = mailer.createTransport({
+    service: '126',
+    auth: {
+			user: config.mail_user,
+			pass: config.mail_pass
+    }
+});
+
+
 function send_mail(data,cb){
-	mailer.send_mail(data,function(err,success){
+	console.log('sendMail start');
+	transporter.sendMail(data,function(err,success){
+		console.log('sendMail end');
+		console.log('err is: ', err);
+		console.log('success is', success);
 		return cb(err,success);
 	});
 }
 
 function send_active_mail(who,token,name,email,cb){
 	var sender =  config.mail_sender;
-	var to = who; 
+	var to = who;
 	var subject = config.name + '社区帐号激活';
 	var html = '<p>您好：<p/>' +
 			   '<p>我们收到您在' + config.name + '社区的注册信息，请点击下面的链接来激活帐户：</p>' +
@@ -26,19 +40,19 @@ function send_active_mail(who,token,name,email,cb){
 			   '<p>' +config.name +'社区 谨上。</p>'
 
 	var data = {
-		sender: sender,
+		from: sender,
 		to: to,
 		subject: subject,
 		html: html
 	}
 
 	send_mail(data,function(err,success){
-		return cb(err,success);	
+		return cb(err,success);
 	});
 }
 function send_reset_pass_mail(who,token,name,cb){
 	var sender = config.mail_sender;
-	var to = who; 
+	var to = who;
 	var subject = config.name + '社区密码重置';
 	var html = '<p>您好：<p/>' +
 			   '<p>我们收到您在' + config.name + '社区重置密码的请求，请单击下面的链接来重置密码：</p>' +
@@ -47,16 +61,16 @@ function send_reset_pass_mail(who,token,name,cb){
 			   '<p>' + config.name +'社区 谨上。</p>'
 
 	var data = {
-		sender: sender,
+		from: sender,
 		to: to,
 		subject: subject,
 		html: html
 	}
 
 	send_mail(data,function(err,success){
-		return cb(err,success);	
+		return cb(err,success);
 	});
-	
+
 }
 
 exports.send_active_mail = send_active_mail;

@@ -1,7 +1,7 @@
 var fs = require('fs');
 var config = require('../config').config;
 
-var mod = require('express/node_modules/connect/node_modules/formidable');
+var mod = require('formidable');
 var upload_path = process.cwd() + '/public/user_data/images/';
 mod.IncomingForm.UPLOAD_DIR = upload_path;
 
