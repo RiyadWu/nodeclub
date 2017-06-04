@@ -9,38 +9,39 @@
 var config = require('./config');
 
 if (!config.debug && config.oneapm_key) {
-  require('oneapm');
+  require('oneapm'); // 线上应用监控
 }
 
-require('colors');
+require('colors'); // node console 彩色显示
 var path = require('path');
-var Loader = require('loader');
-var LoaderConnect = require('loader-connect')
+var Loader = require('loader'); // 生产模式中压缩所有的静态资源实现加速
+var LoaderConnect = require('loader-connect') // 编译less文件
 var express = require('express');
-var session = require('express-session');
-var passport = require('passport');
+var session = require('express-session'); // 直接从req何res中读取session信息 ？？？
+var passport = require('passport'); // 权限验证中间件，可用来做单点登录
 require('./middlewares/mongoose_log'); // 打印 mongodb 查询日志
-require('./models');
-var GitHubStrategy = require('passport-github').Strategy;
-var githubStrategyMiddleware = require('./middlewares/github_strategy');
-var webRouter = require('./web_router');
-var apiRouterV1 = require('./api_router_v1');
-var auth = require('./middlewares/auth');
-var errorPageMiddleware = require('./middlewares/error_page');
-var proxyMiddleware = require('./middlewares/proxy');
-var RedisStore = require('connect-redis')(session);
-var _ = require('lodash');
-var csurf = require('csurf');
-var compress = require('compression');
-var bodyParser = require('body-parser');
-var busboy = require('connect-busboy');
-var errorhandler = require('errorhandler');
-var cors = require('cors');
-var requestLog = require('./middlewares/request_log');
-var renderMiddleware = require('./middlewares/render');
-var logger = require('./common/logger');
-var helmet = require('helmet');
-var bytes = require('bytes')
+require('./models'); // 数据库对象模型
+var GitHubStrategy = require('passport-github').Strategy; // github 验证模块
+var githubStrategyMiddleware = require('./middlewares/github_strategy'); // github验证模块
+var webRouter = require('./web_router'); // 网页版逻辑
+var apiRouterV1 = require('./api_router_v1'); // api逻辑
+var auth = require('./middlewares/auth'); // 权限验证，登录状态验证，session生成
+var errorPageMiddleware = require('./middlewares/error_page'); // 错误页
+var proxyMiddleware = require('./middlewares/proxy'); // 数据库操作逻辑
+var RedisStore = require('connect-redis')(session); // session缓存到redis中的中间件
+var _ = require('lodash'); // lodash 库
+var csurf = require('csurf'); // csrf
+var compress = require('compression'); // gzip,deflate 压缩
+var bodyParser = require('body-parser'); // 将http请求转成js对象
+var busboy = require('connect-busboy'); // 将muti类型的http请求转成js对象
+var errorhandler = require('errorhandler'); // 错误处理助手，会打印全部的错误堆栈，只建议在开发模式中用
+var cors = require('cors'); // cors请求，可解决跨域请求
+var requestLog = require('./middlewares/request_log'); // 打印请求日志
+var renderMiddleware = require('./middlewares/render'); // 渲染页面
+var logger = require('./common/logger'); // 日志
+var helmet = require('helmet'); // 设置http请求的web头，防止一些广为人知的wed攻击
+var bytes = require('bytes') // 字节专用单位转换 eg：bytes(1024) -> '1kB'; bytes(1000) -> '1000B'
+
 
 
 // 静态文件目录
@@ -57,7 +58,7 @@ if (config.mini_assets) {
   }
 }
 
-var urlinfo = require('url').parse(config.host);
+var urlinfo = require('url').parse(config.host); // url 库
 config.hostname = urlinfo.hostname || config.host;
 
 var app = express();
@@ -65,7 +66,7 @@ var app = express();
 // configuration in all env
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'html');
-app.engine('html', require('ejs-mate'));
+app.engine('html', require('ejs-mate')); // ejs模板引擎
 app.locals._layoutFile = 'layout.html';
 app.enable('trust proxy');
 
@@ -74,7 +75,7 @@ app.use(requestLog);
 
 if (config.debug) {
   // 渲染时间
-  app.use(renderMiddleware.render);
+  app.use(renderMiddleware.render); // 重写res的render方法，在日志中打印渲染时间
 }
 
 // 静态资源
@@ -85,12 +86,12 @@ app.use('/public', express.static(staticDir));
 app.use('/agent', proxyMiddleware.proxy);
 
 // 通用的中间件
-app.use(require('response-time')());
+app.use(require('response-time')()); // 记录响应时间，响应时间：请求进入此中间件 到 浏览器接收到响应头
 app.use(helmet.frameguard('sameorigin'));
 app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
-app.use(require('method-override')());
-app.use(require('cookie-parser')(config.session_secret));
+app.use(require('method-override')()); // 使不兼容http动词 put/delete等的浏览器可以使用这些动词，必须在csurf之前用
+app.use(require('cookie-parser')(config.session_secret)); // 将cookie解析成js对象
 app.use(compress());
 app.use(session({
   secret: config.session_secret,
@@ -156,7 +157,7 @@ app.use(busboy({
   }
 }));
 
-// 不允许直接访问此程序，需要藏在 nginx 之后
+// 不允许直接访问此程序，需要藏在 nginx 之后  (???不懂什么意思)
 app.use(function (req, res, next) {
   if (req.connection.remoteAddress == '::ffff:127.0.0.1' || req.connection.remoteAddress == '::1') {
     return next();
